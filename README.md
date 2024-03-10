@@ -27,3 +27,9 @@ A portfolio tracking API that allows adding/deleting/updating trades and can do 
 └── index.js : This contains the main code for setting up express server and It also contains Code to establish connection with the Database. It also connect all   
                 defined Routes for the api to server.
 ```
+
+Steps to run the Portfolio tracking API:
+git clone this repo
+git pull this repo
+npm i
+create a .env file and add MONGODB_URI (create a mongo db at https://cloud.mongodb.com/ or create local db and pass the url here) and PORT as 8081
