@@ -1,10 +1,11 @@
 # portfolioTrackingAPI
 A portfolio tracking API that allows adding/deleting/updating trades and can do basic return calculations etc.
 
+```bash
 ├── app
 │ ├── controllers
 │
-├── portfolio.controller.js: This defines all the logic that will be executed based on the particular endpoint of the api.
+├── portfolio.controller.js: This defines all the logic that will be executed based on theparticular endpoint of the api.
 │
 └── validator
 │
@@ -22,3 +23,4 @@ A portfolio tracking API that allows adding/deleting/updating trades and can do 
 ├──database.config.js : This contains the database connection url.
 └── server.js : This contains the main code for setting up express server and It also contains Code to establish connection with the Database. It also connect all   
                 defined Routes for the api to server.
+```
