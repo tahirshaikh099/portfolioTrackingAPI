@@ -10,7 +10,7 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.use('/api', tradeRoutes);
+app.use('/v1', tradeRoutes);
 
 
 app.use('/', (req, res) => {
