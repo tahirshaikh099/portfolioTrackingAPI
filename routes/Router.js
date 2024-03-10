@@ -26,10 +26,10 @@ router.route('/addTrade').post(addTrade);
 router.route('/addStocks').post(addStock);
 
 // HTTP PUT calls
-router.route('/updateTrade').put(modifyTrade);
+router.route('/updateTrade/:portfolioId').put(modifyTrade);
 
 // HTTP DELETE calls
-router.route('/removeTrade').delete(deleteTrade);
+router.route('/removeTrade/:portfolioId').delete(deleteTrade);
 
 
 
