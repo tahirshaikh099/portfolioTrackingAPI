@@ -33,3 +33,40 @@ git clone this repo
 git pull this repo
 npm i
 create a .env file and add MONGODB_URI (create a mongo db at https://cloud.mongodb.com/ or create local db and pass the url here) and PORT as 8081
+
+## Software Requirements
+
+- Node.js **v18.17+**
+- MongoDB **v7+** (Recommended **7.0.1**)
+
+## How to install
+
+### Using Git (recommended)
+
+1.  Clone the project from github. Change "myproject" to your project name.
+
+```bash
+git clone
+```
+
+### Using manual download ZIP
+
+1.  Download repository
+2.  Uncompress to your desired directory
+
+### Install npm dependencies after installing (Git or manual download)
+
+```bash
+cd myproject
+npm install
+```
+
+### Setting up environments
+
+1.  You will find a file named `.env.example` on root directory of project.
+2.  Create a new file by copying and pasting the file and then renaming it to just `.env`
+    ```bash
+    cp .env.example .env
+    ```
+3.  The file `.env` is already ignored, so you never commit your credentials.
+4.  Change the values of the file to your environment. Helpful comments added to `.env.example` file to understand the constants.
