@@ -16,15 +16,19 @@ const getApiKey = async (req, res) => {
     const { username, password } = req.headers;
     if (!username || !password) {
         res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects `username` and `password`' });
+        return;
     };
     try {
         let user = await User.findOne({ username, password });
         if (!user) {
-            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'User Not found' });
+            res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'User Not found' });
+            return;
         };
-        return res.status(StatusCodes.OK).json({ success: true, apikey: user.apikey });
+        res.status(StatusCodes.OK).json({ success: true, apikey: user.apikey });
+        return;
     } catch (error) {
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, error: error.message });
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, error: error.message });
+        return;
     };
 };
 
