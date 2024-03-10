@@ -41,7 +41,7 @@ const getStocks = async (req, res) => {
     let { apikey } = req.body;
     const validate = await checkApikey(apikey);
     if (!validate) {
-        return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+        return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
     }
     try {
         let stocks = await Stock.find({}, { __v: 0, updatedAt: 0 });
@@ -62,21 +62,24 @@ const getStocks = async (req, res) => {
  */
 const addStock = async (req, res) => {
     const { name, price, apikey } = req.body;
+    if (!name || price || !apikey) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects name, price, apikey' });
+    };
     try {
         const validate = await checkApikey(apikey);
         if (!validate) {
-            return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
         };
         let stock = await Stock.findOne({ name });
         if (!stock) {
             stock = await Stock.create({ name, price });
-            return res.status(StatusCodes.CREATED).json({ message: 'Stock created successfully' });
+            return res.status(StatusCodes.CREATED).json({ success: true, message: 'Stock created successfully' });
         };
         stock.price = price;
         await stock.save();
-        return res.status(StatusCodes.OK).json({ message: 'Stock updated successfully' });
+        return res.status(StatusCodes.OK).json({ success: true, message: 'Stock updated successfully' });
     } catch (error) {
-        return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: error.message });
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, error: error.message });
     };
 };
 
@@ -90,16 +93,13 @@ const addStock = async (req, res) => {
  */
 const addTrade = async (req, res) => {
     const { stockId, quantity, type, apikey } = req.body;
-    if (!apikey) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects `apikey`' });
-    };
-    if (!stockId || !quantity || quantity <= 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects valid params' });
+    if (!stockId || !quantity || quantity <= 0 || !type || !apikey) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects stockId, quantity, type, apikey' });
     };
     try {
         const validate = await checkApikey(apikey);
         if (!validate) {
-            return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
         };
         let stock = await Stock.findById(stockId);
         if (!stock) {
@@ -118,7 +118,7 @@ const addTrade = async (req, res) => {
         let data = await portfolio.save();
         return res.status(StatusCodes.CREATED).json({ success: true, message: 'Trade successful', data: data });
     } catch (error) {
-        return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ success: false, error: error.message });
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, error: error.message });
     };
 };
 
@@ -130,12 +130,13 @@ const addTrade = async (req, res) => {
  * @return {Promise} a Promise that resolves with the trade modification result
  */
 const modifyTrade = async (req, res) => {
-    const { quantity, type, portfolioId, apikey } = req.body;
-    if (!apikey) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects apikey' });
+    const { portfolioId } = req.params;
+    const { quantity, type, apikey } = req.body;
+    if (!portfolioId || !quantity || quantity <= 0 || !type || !apikey) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects portfolioId, quantity, type(BUY or SELL), apikey' });
     };
-    if (!quantity || quantity <= 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects param quantity' });
+    if (type !== "BUY" && type !== "SELL") {
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects type (BUY or SELL)' });
     };
     try {
         const validate = await checkApikey(apikey);
@@ -158,7 +159,7 @@ const modifyTrade = async (req, res) => {
             updatedData = { quantity: +portfolioExists.quantity - +quantity };
         }
         await Portfolio.findByIdAndUpdate(portfolioId, { ...updatedData });
-        return res.status(StatusCodes.OK).json({ success: true, data: portfolioExists, message: 'Trade updated' });
+        return res.status(StatusCodes.CREATED).json({ success: true, data: portfolioExists, message: 'Trade updated' });
     } catch (error) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, error: error.message });
     };
@@ -173,17 +174,15 @@ const modifyTrade = async (req, res) => {
  * @return {Promise} a promise that resolves to the result of the trade deletion
  */
 const deleteTrade = async (req, res) => {
-    const { quantity, portfolioId, apikey } = req.body;
-    if (!apikey) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects `apikey`' });
-    };
-    if (!quantity || quantity <= 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects param `quantity`' });
+    const { portfolioId } = req.params;
+    const { quantity, apikey } = req.body;
+    if (!portfolioId || !quantity || quantity <= 0 || !apikey) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects param portfolioId, quantity, apikey' });
     };
     try {
         const validate = await checkApikey(apikey);
         if (!validate) {
-            return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
         };
         let portfolioExists = await Portfolio.load(portfolioId);
         if (!portfolioExists) {
@@ -196,7 +195,7 @@ const deleteTrade = async (req, res) => {
         };
         let portfolio = {};
         if (+quantity > +portfolioExists.quantity) {
-            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'You don\'t have enough stocks to sell!!!' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'You don\'t have enough stocks to sell' });
         } else if (+quantity === +portfolioExists.quantity) {
             portfolio = await Portfolio.findByIdAndRemove(portfolioId);
         } else {
@@ -204,7 +203,6 @@ const deleteTrade = async (req, res) => {
             portfolio = await Portfolio.findByIdAndUpdate(portfolioId, updatedData);
             Object.assign(Portfolio, updatedData);
         };
-        console.log("portfolioExists.quantity :- ", portfolioExists.quantity, "\n", "portfolio :- ", portfolio)
         return res.status(StatusCodes.CREATED).json({ success: true, data: portfolio, message: 'Trade successfully removed' });
     } catch (error) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, error: error.message });
@@ -224,12 +222,12 @@ const deleteTrade = async (req, res) => {
 const getPortfolio = async (req, res) => {
     const { apikey } = req.body;
     if (!apikey) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects `apikey`' });
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects apikey' });
     }
     try {
         const validate = await checkApikey(apikey);
         if (!validate) {
-            return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
         }
         let stocks = await Stock.loadAll();
         stocks = JSON.parse(JSON.stringify(stocks));
@@ -263,12 +261,12 @@ const getPortfolio = async (req, res) => {
 const getHoldings = async (req, res) => {
     const { apikey } = req.body;
     if (!apikey) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects `apikey`' });
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects apikey' });
     };
     try {
         const validate = await checkApikey(apikey);
         if (!validate) {
-            return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
         };
         let portfolio = await Portfolio.loadAll();
         let data = await Promise.all(portfolio.map(async (v) => {
@@ -294,12 +292,12 @@ const getHoldings = async (req, res) => {
 const getCumulativeReturn = async (req, res) => {
     const { apikey } = req.body;
     if (!apikey) {
-        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects `apikey`' });
+        return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Request expects apikey' });
     };
     try {
         const validate = await checkApikey(apikey);
         if (!validate) {
-            return res.status(StatusCodes.FORBIDDEN).json({ message: 'Authentication Error' });
+            return res.status(StatusCodes.FORBIDDEN).json({ success: false, message: 'Authentication Error' });
         };
         let portfolio = await Portfolio.find();
         let stocks = await Stock.find({ _id: { $in: portfolio.map(p => p.stock) } });
